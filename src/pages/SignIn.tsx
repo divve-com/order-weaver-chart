@@ -18,7 +18,9 @@ export default function SignIn() {
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"signin" | "forgot">("signin");
+  const [mode, setMode] = useState<"signin" | "forgot">(
+    searchParams.get("mode") === "forgot" ? "forgot" : "signin",
+  );
   const [info, setInfo] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

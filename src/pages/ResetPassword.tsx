@@ -17,6 +17,7 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkInvalid, setLinkInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function ResetPassword() {
       const queryError =
         url.searchParams.get("error_description") ||
         url.searchParams.get("error");
+      const queryErrorCode = url.searchParams.get("error_code");
 
       // 2) Older flows put tokens in the URL hash (#access_token=...&type=recovery)
       const hash = window.location.hash.startsWith("#")
@@ -41,13 +43,18 @@ export default function ResetPassword() {
       const hashParams = new URLSearchParams(hash);
       const hashError =
         hashParams.get("error_description") || hashParams.get("error");
+      const hashErrorCode = hashParams.get("error_code");
 
       if (queryError || hashError) {
+        const code = queryErrorCode || hashErrorCode;
+        const message = queryError || hashError || "";
+        setLinkInvalid(true);
         setError(
-          decodeURIComponent(
-            queryError || hashError || "Link ist ungültig oder abgelaufen.",
-          ),
+          code === "otp_expired" || /expired|invalid/i.test(message)
+            ? "Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Passwort-Link an."
+            : message || "Link ist ungültig oder abgelaufen.",
         );
+        window.history.replaceState({}, "", "/reset-password");
         return;
       }
 
@@ -70,8 +77,13 @@ export default function ResetPassword() {
           window.history.replaceState({}, "", "/reset-password");
           return;
         }
-      } catch (e: any) {
-        setError(e?.message || "Link ist ungültig oder abgelaufen.");
+      } catch (e: unknown) {
+        setLinkInvalid(true);
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Link ist ungültig oder abgelaufen.",
+        );
         return;
       }
 
@@ -120,7 +132,9 @@ export default function ResetPassword() {
           </div>
           <CardTitle className="text-2xl">Neues Passwort setzen</CardTitle>
           <CardDescription>
-            {ready
+            {linkInvalid
+              ? "Fordere einen neuen Link an, um dein Passwort zu setzen."
+              : ready
               ? "Wähle ein neues Passwort für dein Konto."
               : "Link wird geprüft…"}
           </CardDescription>
@@ -155,10 +169,20 @@ export default function ResetPassword() {
             <Button
               type="submit"
               className="w-full"
-              disabled={!ready || loading}
+              disabled={!ready || loading || linkInvalid}
             >
               {loading ? "Wird gespeichert…" : "Passwort speichern"}
             </Button>
+            {linkInvalid && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/sign-in?mode=forgot")}
+              >
+                Neuen Link anfordern
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
