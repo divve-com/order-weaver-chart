@@ -17,6 +17,7 @@ async function embed(text: string): Promise<number[]> {
     body: JSON.stringify({
       model: "openai/text-embedding-3-small",
       input: text,
+      dimensions: 1024,
     }),
   });
   if (!res.ok) {
