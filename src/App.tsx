@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import OrdersList from "./pages/OrdersList";
@@ -25,15 +26,17 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/sign-in" element={<SignIn />} />
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/orders" element={<OrdersList />} />
-            <Route path="/orders/:id" element={<OrderDetail />} />
-            <Route path="/planning" element={<Planning />} />
-            <Route path="/resources" element={<Resources />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<SettingsView />} />
-            <Route path="/components" element={<Components />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/orders" element={<OrdersList />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
+              <Route path="/planning" element={<Planning />} />
+              <Route path="/resources" element={<Resources />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/settings" element={<SettingsView />} />
+              <Route path="/components" element={<Components />} />
+            </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
