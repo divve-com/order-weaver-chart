@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { statusStyles, type Order, type Resource } from "@/data/production";
+import { AlertTriangle } from "lucide-react";
 
 interface Props {
   orders: Order[];
@@ -10,6 +11,8 @@ interface Props {
   startOffsetDays?: number;
   onSelect?: (order: Order) => void;
   onChange?: (order: Order) => void;
+  /** Wird aufgerufen, wenn ein verschobener Auftrag eine Überlastung erzeugt. */
+  onOverload?: (info: { order: Order; resource: Resource; days: { date: string; load: number; capacity: number }[] }) => void;
 }
 
 const DAY = 86_400_000;
@@ -27,6 +30,7 @@ export function GanttChart({
   startOffsetDays = -7,
   onSelect,
   onChange,
+  onOverload,
 }: Props) {
   const origin = useMemo(() => {
     const t = startOfDay(new Date());
@@ -104,7 +108,24 @@ export function GanttChart({
     const upd = tempPos[d.id];
     if (upd && onChange) {
       const o = orders.find((x) => x.id === d.id);
-      if (o) onChange({ ...o, start: upd.start, end: upd.end });
+      if (o) {
+        const next = { ...o, start: upd.start, end: upd.end };
+        onChange(next);
+        if (onOverload) {
+          const res = resources.find((r) => r.id === next.resourceId);
+          if (res) {
+            const overloadedDays = daysSpanning(next).map((iso) => {
+              const load = orders.reduce((sum, x) => {
+                const eff = x.id === next.id ? next : (tempPos[x.id] ? { ...x, ...tempPos[x.id] } : x);
+                if (eff.resourceId !== res.id) return sum;
+                return touchesDay(eff, iso) ? sum + eff.loadHours : sum;
+              }, 0);
+              return { date: iso, load, capacity: res.capacityHours };
+            }).filter((x) => x.load > x.capacity);
+            if (overloadedDays.length) onOverload({ order: next, resource: res, days: overloadedDays });
+          }
+        }
+      }
     }
     setTempPos((p) => { const n = { ...p }; delete n[d.id]; return n; });
   };
@@ -113,6 +134,43 @@ export function GanttChart({
     const t = tempPos[o.id];
     return t ? { ...o, start: t.start, end: t.end } : o;
   };
+
+  // Per (resource, day-index) Load-Summe inkl. aktiver Drag-Position
+  const loadByResDay = useMemo(() => {
+    const m = new Map<string, number[]>();
+    resources.forEach((r) => m.set(r.id, new Array(rangeDays).fill(0)));
+    orders.forEach((raw) => {
+      const o = resolved(raw);
+      const arr = m.get(o.resourceId);
+      if (!arr) return;
+      const s = Math.max(0, dayIndex(o.start));
+      const e = Math.min(rangeDays, dayIndex(o.end));
+      for (let i = s; i < e; i++) arr[i] += o.loadHours;
+    });
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders, resources, rangeDays, tempPos]);
+
+  const overloadedResources = useMemo(() => {
+    const set = new Set<string>();
+    resources.forEach((r) => {
+      const arr = loadByResDay.get(r.id) ?? [];
+      if (arr.some((v) => v > r.capacityHours)) set.add(r.id);
+    });
+    return set;
+  }, [loadByResDay, resources]);
+
+  function daysSpanning(o: Order): string[] {
+    const out: string[] = [];
+    const s = startOfDay(new Date(o.start)).getTime();
+    const e = startOfDay(new Date(o.end)).getTime();
+    for (let t = s; t < e; t += DAY) out.push(new Date(t).toISOString());
+    return out;
+  }
+  function touchesDay(o: Order, isoDay: string): boolean {
+    const d = +startOfDay(new Date(isoDay));
+    return +startOfDay(new Date(o.start)) <= d && d < +startOfDay(new Date(o.end));
+  }
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -124,9 +182,21 @@ export function GanttChart({
               Ressource
             </div>
             {resources.map((r) => (
-              <div key={r.id} style={{ height: ROW }} className="flex flex-col justify-center border-b px-3">
-                <p className="truncate text-sm font-medium">{r.name}</p>
-                <p className="text-xs text-muted-foreground">{r.group} · {r.capacityHours} h/Tag</p>
+              <div key={r.id} style={{ height: ROW }} className="flex items-center gap-2 border-b px-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{r.name}</p>
+                  <p className="text-xs text-muted-foreground">{r.group} · {r.capacityHours} h/Tag</p>
+                </div>
+                {overloadedResources.has(r.id) && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Überlastung in diesem Zeitraum</TooltipContent>
+                  </Tooltip>
+                )}
               </div>
             ))}
           </div>
@@ -176,12 +246,32 @@ export function GanttChart({
                   {/* Day column lines */}
                   {days.map((d, i) => {
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const load = loadByResDay.get(r.id)?.[i] ?? 0;
+                    const overloaded = load > r.capacityHours;
                     return (
-                      <div
-                        key={i}
-                        style={{ left: i * COL, width: COL }}
-                        className={cn("absolute top-0 h-full border-r border-border/50", isWeekend && "bg-muted/30")}
-                      />
+                      <Tooltip key={i}>
+                        <TooltipTrigger asChild>
+                          <div
+                            style={{ left: i * COL, width: COL }}
+                            className={cn(
+                              "absolute top-0 h-full border-r border-border/50",
+                              isWeekend && "bg-muted/30",
+                              overloaded && "bg-destructive/15",
+                            )}
+                          />
+                        </TooltipTrigger>
+                        {load > 0 && (
+                          <TooltipContent>
+                            <p className="text-xs">
+                              {d.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                            </p>
+                            <p className={cn("text-xs", overloaded && "font-semibold text-destructive")}>
+                              Last: {load} h / {r.capacityHours} h
+                              {overloaded && ` · +${load - r.capacityHours} h Überlast`}
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
                     );
                   })}
 

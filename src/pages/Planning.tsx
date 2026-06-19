@@ -34,9 +34,33 @@ export default function Planning() {
   }, [items]);
   const avgUtil = Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length);
 
+  const overloadedRes = useMemo(() => {
+    const DAY = 86_400_000;
+    const horizon = 60;
+    const origin = new Date(); origin.setHours(0,0,0,0); origin.setDate(origin.getDate() - 30);
+    const loads = new Map<string, number[]>();
+    resources.forEach((r) => loads.set(r.id, new Array(horizon).fill(0)));
+    items.forEach((o) => {
+      const arr = loads.get(o.resourceId); if (!arr) return;
+      const s = Math.max(0, Math.floor((+new Date(o.start) - +origin) / DAY));
+      const e = Math.min(horizon, Math.floor((+new Date(o.end) - +origin) / DAY));
+      for (let i = s; i < e; i++) arr[i] += o.loadHours;
+    });
+    let count = 0;
+    resources.forEach((r) => { if ((loads.get(r.id) ?? []).some((v) => v > r.capacityHours)) count++; });
+    return count;
+  }, [items]);
+
   const updateOrder = (next: Order) => {
     setItems((arr) => arr.map((o) => (o.id === next.id ? next : o)));
     toast.success(`${next.number} verschoben`);
+  };
+
+  const handleOverload = ({ order, resource, days }: { order: Order; resource: { name: string; capacityHours: number }; days: { date: string; load: number; capacity: number }[] }) => {
+    const worst = days.reduce((m, d) => (d.load > m.load ? d : m), days[0]);
+    toast.warning(`Überlastung auf ${resource.name}`, {
+      description: `${order.number}: ${days.length} Tag(e) über Kapazität — Spitze ${worst.load} h / ${worst.capacity} h am ${new Date(worst.date).toLocaleDateString("de-DE")}.`,
+    });
   };
 
   return (
@@ -61,7 +85,7 @@ export default function Planning() {
         {[
           { label: "Eingeplant", value: planned, sub: `von ${items.length} Aufträgen` },
           { label: "Konflikte", value: conflicts, sub: "Überschneidungen" },
-          { label: "Ressourcen", value: resources.length, sub: "aktiv" },
+          { label: "Überlastete Ressourcen", value: overloadedRes, sub: `von ${resources.length}` },
           { label: "Auslastung", value: `${avgUtil} %`, sub: "Durchschnitt" },
         ].map((k) => (
           <Card key={k.label}>
@@ -83,6 +107,7 @@ export default function Planning() {
             startOffsetDays={range === "day" ? -2 : range === "week" ? -7 : -14}
             onSelect={setActive}
             onChange={updateOrder}
+            onOverload={handleOverload}
           />
         </CardContent>
       </Card>
@@ -99,6 +124,10 @@ export default function Planning() {
           <span className="ml-4 flex items-center gap-1.5">
             <span className="inline-block h-3 w-5 rounded ring-2 ring-destructive" />
             <span>Konflikt</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-5 rounded bg-destructive/15" />
+            <span>Überlastung (h &gt; Kapazität)</span>
           </span>
         </CardContent>
       </Card>
