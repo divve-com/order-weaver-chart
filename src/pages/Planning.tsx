@@ -78,7 +78,7 @@ export default function Planning() {
       <PageHeader
         breadcrumbs={[{ label: "Produktion" }, { label: "Planung" }]}
         title="Planung"
-        subtitle="Aufträge per Drag & Drop auf der Zeitachse einplanen."
+        subtitle="Read-Only-Demo: Auftragsdaten werden gelesen, Änderungen sind ohne Login deaktiviert."
         actions={
           <>
             <ToggleGroup type="single" value={range} onValueChange={(v) => v && setRange(v as keyof typeof rangeDaysMap)} size="sm" variant="outline">
