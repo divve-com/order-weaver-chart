@@ -1,47 +1,45 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useState } from "react";
 import {
-  ArrowUpRight,
-  ArrowDownRight,
-  Mail,
-  ShieldCheck,
-  FileSignature,
-  Receipt,
-  Sparkles,
-  AlertCircle,
-  Plus,
-  Send,
-  UserPlus,
-  Download,
+  ArrowUpRight, ArrowDownRight, Sparkles, AlertCircle, Plus, Download,
+  Package, PlayCircle, CheckCircle2, FileSignature, CalendarClock, GanttChartSquare,
 } from "lucide-react";
+import { orders, resources, statusStyles, type OrderStatus } from "@/data/production";
+
+const totalOrders = orders.length;
+const inProgress = orders.filter((o) => o.status === "In Arbeit").length;
+const late = orders.filter((o) => o.status === "Verspätet").length;
+const open = orders.filter((o) => o.status === "Geplant" || o.status === "Freigegeben").length;
+const avgUtil = Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length);
 
 const kpis = [
-  { label: "Aktive Kunden", value: "284", delta: 12, spark: [4, 6, 5, 8, 7, 9, 11] },
-  { label: "Domains live", value: "1.842", delta: 4, spark: [12, 13, 12, 14, 15, 14, 16] },
-  { label: "Mails / 24h", value: "98.412", delta: 18, spark: [20, 30, 28, 40, 50, 48, 62] },
-  { label: "Zustellrate", value: "99,4 %", delta: -1, spark: [60, 58, 59, 57, 56, 58, 57] },
+  { label: "Offene Aufträge", value: String(open), delta: 8, spark: [4, 6, 5, 8, 7, 9, 11] },
+  { label: "In Produktion", value: String(inProgress), delta: 4, spark: [3, 4, 4, 5, 5, 6, 6] },
+  { label: "Verspätet", value: String(late), delta: -2, spark: [6, 5, 5, 4, 4, 3, 3] },
+  { label: "Ø Auslastung", value: `${avgUtil} %`, delta: 6, spark: [50, 55, 58, 60, 65, 62, 68] },
 ];
 
-const pipeline = [
-  { stage: "Lead", count: 14, color: "bg-muted text-muted-foreground" },
-  { stage: "Onboarding", count: 6, color: "bg-lavender-100 text-ink" },
-  { stage: "Validierung", count: 4, color: "bg-peach text-ink" },
-  { stage: "Live", count: 23, color: "bg-success/15 text-success" },
+const stages: { stage: OrderStatus; color: string }[] = [
+  { stage: "Geplant", color: "bg-muted text-muted-foreground" },
+  { stage: "Freigegeben", color: "bg-lavender-100 text-ink" },
+  { stage: "In Arbeit", color: "bg-peach text-ink" },
+  { stage: "Fertig", color: "bg-success/15 text-success" },
+  { stage: "Verspätet", color: "bg-destructive/15 text-destructive" },
 ];
 
 const activity = [
-  { icon: Mail, color: "bg-lavender-300", title: "Mail-Test versendet · acme.de", who: "Jana M.", when: "vor 8 Min." },
-  { icon: ShieldCheck, color: "bg-success/30", title: "DNS validiert · beta-corp.de", who: "System", when: "vor 42 Min." },
-  { icon: FileSignature, color: "bg-mint", title: "SEPA-Mandat unterschrieben · Gamma GmbH", who: "Kunde", when: "vor 2 Std." },
-  { icon: Receipt, color: "bg-peach", title: "Rechnung R-2026-0058 erzeugt · Delta SE", who: "Automatik", when: "vor 5 Std." },
-  { icon: UserPlus, color: "bg-lavender-100", title: "Neuer Kunde angelegt · Epsilon UG", who: "Tom K.", when: "gestern" },
+  { icon: PlayCircle, color: "bg-lavender-300", title: "PA-2026-018 gestartet · CNC-Fräse 1", who: "Sara L.", when: "vor 6 Min." },
+  { icon: CheckCircle2, color: "bg-success/30", title: "PA-2026-014 fertiggestellt · Linie A", who: "System", when: "vor 38 Min." },
+  { icon: CalendarClock, color: "bg-peach", title: "Plan veröffentlicht · KW 25", who: "Jana M.", when: "vor 2 Std." },
+  { icon: FileSignature, color: "bg-mint", title: "PA-2026-022 freigegeben", who: "Tom K.", when: "vor 4 Std." },
+  { icon: Package, color: "bg-lavender-100", title: "Neuer Auftrag · Welle W-18 · 250 Stk.", who: "Ben H.", when: "gestern" },
 ];
 
 function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
@@ -70,12 +68,13 @@ function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
 
 export default function Dashboard() {
   const [range, setRange] = useState("week");
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <PageHeader
-        breadcrumbs={[{ label: "Übersicht" }]}
-        title="Dashboard"
-        subtitle="Live-Status aller Kunden, Domains und Versand-Pipelines."
+        breadcrumbs={[{ label: "Produktion" }, { label: "Übersicht" }]}
+        title="Übersicht"
+        subtitle="Status aller Produktionsaufträge, Linien und Termine."
         actions={
           <>
             <ToggleGroup type="single" value={range} onValueChange={(v) => v && setRange(v)} size="sm" variant="outline">
@@ -84,16 +83,16 @@ export default function Dashboard() {
               <ToggleGroupItem value="month">Monat</ToggleGroupItem>
             </ToggleGroup>
             <Button variant="outline"><Download className="mr-2 h-4 w-4" /> Export</Button>
-            <Button><Plus className="mr-2 h-4 w-4" /> Neuer Kunde</Button>
+            <Button onClick={() => navigate("/orders")}><Plus className="mr-2 h-4 w-4" /> Neuer Auftrag</Button>
           </>
         }
       />
 
       <Alert>
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>2 DNS-Records warten auf Validierung</AlertTitle>
+        <AlertTitle>{late} Aufträge in Verzug</AlertTitle>
         <AlertDescription>
-          Bei <span className="font-medium">beta-corp.de</span> und <span className="font-medium">zeta-ug.de</span> sind SPF/DKIM noch nicht propagiert. Letzte Prüfung vor 4 Min.
+          Liefertermine überschritten. Prüfe Priorisierung und Ressourcenverfügbarkeit in der <button className="font-medium underline" onClick={() => navigate("/planning")}>Planung</button>.
         </AlertDescription>
       </Alert>
 
@@ -130,7 +129,7 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="text-lg">Letzte Aktivitäten</CardTitle>
-              <CardDescription>Live-Stream aus Versand, DNS und Onboarding.</CardDescription>
+              <CardDescription>Ereignisse aus Produktion und Planung.</CardDescription>
             </div>
             <Badge variant="secondary"><span className="mr-1 inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse" /> Live</Badge>
           </CardHeader>
@@ -155,16 +154,19 @@ export default function Dashboard() {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Pipeline</CardTitle>
-              <CardDescription>Kunden nach Onboarding-Stufe.</CardDescription>
+              <CardTitle className="text-lg">Status-Pipeline</CardTitle>
+              <CardDescription>Aufträge nach Bearbeitungsstand.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {pipeline.map((p) => (
-                <div key={p.stage} className="flex items-center justify-between rounded-md border p-2.5">
-                  <span className="text-sm">{p.stage}</span>
-                  <Badge className={p.color}>{p.count}</Badge>
-                </div>
-              ))}
+              {stages.map((p) => {
+                const c = orders.filter((o) => o.status === p.stage).length;
+                return (
+                  <div key={p.stage} className="flex items-center justify-between rounded-md border p-2.5">
+                    <span className="text-sm">{p.stage}</span>
+                    <Badge className={p.color}>{c}</Badge>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -173,9 +175,9 @@ export default function Dashboard() {
               <CardTitle className="text-lg">Schnellaktionen</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button className="w-full justify-between"><span className="flex items-center"><UserPlus className="mr-2 h-4 w-4" /> Kunde anlegen</span> <ArrowUpRight className="h-4 w-4" /></Button>
-              <Button variant="outline" className="w-full justify-between"><span className="flex items-center"><Send className="mr-2 h-4 w-4" /> Mail-Test</span> <ArrowUpRight className="h-4 w-4" /></Button>
-              <Button variant="secondary" className="w-full justify-between"><span className="flex items-center"><Sparkles className="mr-2 h-4 w-4" /> KI-Vorschlag</span> <ArrowUpRight className="h-4 w-4" /></Button>
+              <Button className="w-full justify-between" onClick={() => navigate("/orders")}><span className="flex items-center"><Plus className="mr-2 h-4 w-4" /> Auftrag anlegen</span> <ArrowUpRight className="h-4 w-4" /></Button>
+              <Button variant="outline" className="w-full justify-between" onClick={() => navigate("/planning")}><span className="flex items-center"><GanttChartSquare className="mr-2 h-4 w-4" /> Plan öffnen</span> <ArrowUpRight className="h-4 w-4" /></Button>
+              <Button variant="secondary" className="w-full justify-between" onClick={() => navigate("/reports")}><span className="flex items-center"><Sparkles className="mr-2 h-4 w-4" /> Auswertungen</span> <ArrowUpRight className="h-4 w-4" /></Button>
             </CardContent>
           </Card>
         </div>
@@ -184,39 +186,32 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Monats-Kontingent</CardTitle>
-            <CardDescription>Versendete Mails im Juni 2026.</CardDescription>
+            <CardTitle className="text-lg">Monats-Auslastung</CardTitle>
+            <CardDescription>Kapazitätsnutzung Juni 2026.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-end justify-between">
-              <p className="text-3xl font-bold">2,84 M</p>
-              <p className="text-sm text-muted-foreground">von 5 M</p>
+              <p className="text-3xl font-bold">{avgUtil} %</p>
+              <p className="text-sm text-muted-foreground">Ø über alle Linien</p>
             </div>
-            <Progress value={57} />
-            <p className="text-xs text-muted-foreground">57 % verbraucht · 11 Tage verbleibend</p>
+            <Progress value={avgUtil} />
+            <p className="text-xs text-muted-foreground">{totalOrders} Aufträge im Zeitraum · 11 Tage verbleibend</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Top-Versender</CardTitle>
-            <CardDescription>Diese Woche.</CardDescription>
+            <CardTitle className="text-lg">Top-Ressourcen</CardTitle>
+            <CardDescription>Höchste Auslastung diese Woche.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { name: "Acme GmbH", mails: "412.220", initials: "AC" },
-              { name: "Beta KG", mails: "298.104", initials: "BK" },
-              { name: "Gamma AG", mails: "187.560", initials: "GA" },
-              { name: "Delta SE", mails: "142.001", initials: "DS" },
-            ].map((t) => (
-              <div key={t.name} className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-lavender-100 text-ink text-xs">{t.initials}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.mails} Mails</p>
+            {[...resources].sort((a,b) => b.utilization - a.utilization).slice(0,4).map((r) => (
+              <div key={r.id} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{r.name}</span>
+                  <span className="font-mono text-xs">{r.utilization}%</span>
                 </div>
+                <Progress value={r.utilization} />
               </div>
             ))}
           </CardContent>
@@ -224,22 +219,17 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">System-Health</CardTitle>
-            <CardDescription>EU-Infrastruktur.</CardDescription>
+            <CardTitle className="text-lg">Ressourcen-Status</CardTitle>
+            <CardDescription>Live-Übersicht.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {[
-              { name: "SendGrid EU", status: "Operational", dot: "bg-success" },
-              { name: "Webhook-Receiver", status: "Operational", dot: "bg-success" },
-              { name: "DNS-Validator", status: "Degraded", dot: "bg-warning" },
-              { name: "PDF-Service", status: "Operational", dot: "bg-success" },
-            ].map((s) => (
-              <div key={s.name} className="flex items-center justify-between">
+            {resources.map((r) => (
+              <div key={r.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className={`inline-block h-2 w-2 rounded-full ${s.dot}`} />
-                  <span className="text-sm">{s.name}</span>
+                  <span className={`inline-block h-2 w-2 rounded-full ${r.status === "Verfügbar" ? "bg-success" : r.status === "Belegt" ? "bg-warning" : "bg-destructive"}`} />
+                  <span className="text-sm">{r.name}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">{s.status}</span>
+                <span className="text-xs text-muted-foreground">{r.status}</span>
               </div>
             ))}
           </CardContent>
