@@ -128,7 +128,9 @@ export default function ResetPassword() {
           </div>
           <CardTitle className="text-2xl">Neues Passwort setzen</CardTitle>
           <CardDescription>
-            {ready
+            {linkInvalid
+              ? "Fordere einen neuen Link an, um dein Passwort zu setzen."
+              : ready
               ? "Wähle ein neues Passwort für dein Konto."
               : "Link wird geprüft…"}
           </CardDescription>
@@ -163,10 +165,20 @@ export default function ResetPassword() {
             <Button
               type="submit"
               className="w-full"
-              disabled={!ready || loading}
+              disabled={!ready || loading || linkInvalid}
             >
               {loading ? "Wird gespeichert…" : "Passwort speichern"}
             </Button>
+            {linkInvalid && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/sign-in?mode=forgot")}
+              >
+                Neuen Link anfordern
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
