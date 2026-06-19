@@ -23,32 +23,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      appointment_recurrence:
-        | "keine"
-        | "woechentlich"
-        | "zweiwoechentlich"
-        | "monatlich"
-        | "quartal"
-        | "jaehrlich"
-      appointment_status: "geplant" | "erledigt" | "abgesagt"
-      billing_cycle: "monatlich" | "quartal" | "jaehrlich"
-      contract_item_kind: "package" | "module"
-      contract_status: "aktiv" | "pausiert" | "gekuendigt" | "beendet"
-      customer_status:
-        | "neu"
-        | "vertrag"
-        | "dns_setup"
-        | "validierung"
-        | "mail_test"
-        | "aktiv"
-        | "pausiert"
-      domain_status:
-        | "pending_dns"
-        | "dns_valid"
-        | "dns_failed"
-        | "subuser_active"
-      invoice_kind: "einrichtung" | "laufend"
-      invoice_status: "entwurf" | "versendet" | "bezahlt" | "storniert"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -175,36 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      appointment_recurrence: [
-        "keine",
-        "woechentlich",
-        "zweiwoechentlich",
-        "monatlich",
-        "quartal",
-        "jaehrlich",
-      ],
-      appointment_status: ["geplant", "erledigt", "abgesagt"],
-      billing_cycle: ["monatlich", "quartal", "jaehrlich"],
-      contract_item_kind: ["package", "module"],
-      contract_status: ["aktiv", "pausiert", "gekuendigt", "beendet"],
-      customer_status: [
-        "neu",
-        "vertrag",
-        "dns_setup",
-        "validierung",
-        "mail_test",
-        "aktiv",
-        "pausiert",
-      ],
-      domain_status: [
-        "pending_dns",
-        "dns_valid",
-        "dns_failed",
-        "subuser_active",
-      ],
-      invoice_kind: ["einrichtung", "laufend"],
-      invoice_status: ["entwurf", "versendet", "bezahlt", "storniert"],
-    },
+    Enums: {},
   },
 } as const
