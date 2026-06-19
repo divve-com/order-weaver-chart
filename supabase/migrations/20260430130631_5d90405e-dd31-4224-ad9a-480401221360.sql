@@ -1,0 +1,2 @@
+UPDATE public.customers SET subuser_name = NULL WHERE id = 'c90bbc51-eabc-4617-8635-143765483516' AND subuser_name LIKE 'unified_acct_%';
+UPDATE public.domains SET foreign_subuser_username = 'AM-EU-MUELLERSTAHL' WHERE id = 'ef3183cb-77ed-480e-9ad8-83a4f90416a2';

@@ -1,0 +1,1 @@
+ALTER TABLE public.domains ADD COLUMN subuser_admin_api_key text;

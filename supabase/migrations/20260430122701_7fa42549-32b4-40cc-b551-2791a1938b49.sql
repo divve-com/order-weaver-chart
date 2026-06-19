@@ -1,0 +1,1 @@
+ALTER TABLE public.mail_test_logs ADD COLUMN IF NOT EXISTS raw_error text;

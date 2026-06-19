@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@font-face {
+  font-family: 'PolySans Neutral';
+  src: url('/fonts/PolySans-Neutral.woff2') format('woff2'),
+       url('/fonts/PolySans-Neutral.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PolySans Neutral';
+  src: url('/fonts/PolySans-NeutralItalic.woff2') format('woff2'),
+       url('/fonts/PolySans-NeutralItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PolySans Inky';
+  src: url('/fonts/PolySans-Inky.woff2') format('woff2'),
+       url('/fonts/PolySans-Inky.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PolySans Inky';
+  src: url('/fonts/PolySans-InkyItalic.woff2') format('woff2'),
+       url('/fonts/PolySans-InkyItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Typography */
+    --font-sans: 'Manrope', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    --font-display: 'PolySans Neutral', 'PolySans Inky', 'Manrope', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+    /* Brand core (Ink + Lavender system) */
+    --ink: 240 60% 6%;              /* #07071A */
+    --ink-deep: 260 57% 9%;         /* #140A25 */
+    --lavender-500: 262 65% 73%;    /* #AE8DE9 brand */
+    --lavender-300: 261 92% 84%;    /* #C8AFFC */
+    --lavender-100: 262 92% 95%;    /* #EEE6FE */
+    --lavender-50: 262 100% 97%;    /* #F4EDFF */
+    --almost-white: 289 36% 94%;    /* #F3EBF6 */
+    --mint: 171 51% 79%;            /* #AFE4DD */
+    --peach: 18 100% 83%;           /* #FFC2A9 */
+
+    /* App surfaces — primary background stays White */
+    --background: 0 0% 100%;
+    --foreground: 240 60% 6%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 60% 6%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 60% 6%;
+
+    /* Primary = Ink (pill button on dark) */
+    --primary: 240 60% 6%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary = Lavender 300 (social accent) */
+    --secondary: 261 92% 84%;
+    --secondary-foreground: 240 60% 6%;
+
+    --muted: 262 100% 97%;
+    --muted-foreground: 260 15% 40%;
+
+    --accent: 262 92% 95%;
+    --accent-foreground: 240 60% 6%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 171 51% 60%;
+    --success-foreground: 240 60% 6%;
+
+    --warning: 18 100% 70%;
+    --warning-foreground: 240 60% 6%;
+
+    --border: 262 30% 90%;
+    --input: 262 30% 90%;
+    --ring: 262 65% 73%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 30% 20%;
+    --sidebar-primary: 240 60% 6%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 262 100% 97%;
+    --sidebar-accent-foreground: 240 60% 6%;
+    --sidebar-border: 262 30% 90%;
+    --sidebar-ring: 262 65% 73%;
+  }
+
+  .dark {
+    --background: 220 25% 7%;
+    --foreground: 220 10% 95%;
+
+    --card: 220 25% 10%;
+    --card-foreground: 220 10% 95%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 220 10% 95%;
+
+    --primary: 220 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 10% 95%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 220 20% 18%;
+    --accent-foreground: 220 10% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 220 70% 55%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+
+  code, kbd, samp, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Inherit fonts in form controls (buttons, inputs, selects) */
+  button, input, optgroup, select, textarea {
+    font-family: inherit;
+  }
+}
