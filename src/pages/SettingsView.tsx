@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,12 +48,73 @@ const scoreLabels = ["Sehr schwach", "Schwach", "Okay", "Gut", "Stark", "Sehr st
 const scoreColors = ["bg-destructive", "bg-destructive", "bg-warning", "bg-warning", "bg-success", "bg-success"];
 
 export default function SettingsView() {
+  const { user } = useAuth();
   const [pw, setPw] = useState("");
   const [reveal, setReveal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const score = useMemo(() => passwordScore(pw), [pw]);
   const apiKey = "sk_live_eu_4f2d8a1c9b3e7f0a6d2c8e1b9a4f7d3e";
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (error) {
+        toast.error("Profil konnte nicht geladen werden");
+      } else if (data) {
+        setFirstName(data.first_name ?? "");
+        setLastName(data.last_name ?? "");
+        setEmail(data.email ?? user.email ?? "");
+      } else {
+        setEmail(user.email ?? "");
+      }
+      setLoadingProfile(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const saveProfile = async () => {
+    if (!user) return;
+    setSaving(true);
+    setSaved(false);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        email,
+      });
+    setSaving(false);
+    if (error) {
+      toast.error("Speichern fehlgeschlagen: " + error.message);
+      return;
+    }
+    if (email && email !== user.email) {
+      const { error: authErr } = await supabase.auth.updateUser({ email });
+      if (authErr) {
+        toast.error("E-Mail-Änderung: " + authErr.message);
+      } else {
+        toast.info("Bestätigungs-Mail an neue Adresse versendet");
+      }
+    }
+    setSaved(true);
+    toast.success("Profil gespeichert");
+    setTimeout(() => setSaved(false), 2000);
+  };
 
   return (
     <div className="space-y-6">
@@ -81,15 +144,31 @@ export default function SettingsView() {
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="firstname">Vorname</Label>
-                <Input id="firstname" defaultValue="Jana" />
+                <Input
+                  id="firstname"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loadingProfile}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastname">Nachname</Label>
-                <Input id="lastname" defaultValue="Müller" />
+                <Input
+                  id="lastname"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loadingProfile}
+                />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="email">E-Mail</Label>
-                <Input id="email" type="email" defaultValue="jana@kiv.io" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loadingProfile}
+                />
               </div>
             </CardContent>
           </Card>
@@ -263,17 +342,8 @@ export default function SettingsView() {
       <div className="flex justify-end gap-2">
         <Button variant="outline">Abbrechen</Button>
         <Button
-          disabled={saving}
-          onClick={() => {
-            setSaving(true);
-            setSaved(false);
-            setTimeout(() => {
-              setSaving(false);
-              setSaved(true);
-              toast.success("Einstellungen gespeichert");
-              setTimeout(() => setSaved(false), 2000);
-            }, 1200);
-          }}
+          disabled={saving || loadingProfile}
+          onClick={saveProfile}
         >
           {saving ? (
             <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern…</>
