@@ -15,7 +15,7 @@ async function embed(text: string): Promise<number[]> {
       "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text }),
+    body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text, dimensions: 1024 }),
   });
   if (!res.ok) throw new Error(`Embed ${res.status}: ${await res.text()}`);
   const j = await res.json();

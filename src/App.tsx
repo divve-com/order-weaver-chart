@@ -13,6 +13,7 @@ import Resources from "./pages/Resources";
 import Reports from "./pages/Reports";
 import SettingsView from "./pages/SettingsView";
 import Components from "./pages/Components";
+import Chat from "./pages/Chat";
 import SignIn from "./pages/SignIn";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -38,6 +39,8 @@ const App = () => (
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<SettingsView />} />
               <Route path="/components" element={<Components />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/chat/:threadId" element={<Chat />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFound />} />
