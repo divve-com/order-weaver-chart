@@ -17,6 +17,7 @@ export default function ResetPassword() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkInvalid, setLinkInvalid] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function ResetPassword() {
       const queryError =
         url.searchParams.get("error_description") ||
         url.searchParams.get("error");
+      const queryErrorCode = url.searchParams.get("error_code");
 
       // 2) Older flows put tokens in the URL hash (#access_token=...&type=recovery)
       const hash = window.location.hash.startsWith("#")
@@ -41,13 +43,18 @@ export default function ResetPassword() {
       const hashParams = new URLSearchParams(hash);
       const hashError =
         hashParams.get("error_description") || hashParams.get("error");
+      const hashErrorCode = hashParams.get("error_code");
 
       if (queryError || hashError) {
+        const code = queryErrorCode || hashErrorCode;
+        const message = queryError || hashError || "";
+        setLinkInvalid(true);
         setError(
-          decodeURIComponent(
-            queryError || hashError || "Link ist ungültig oder abgelaufen.",
-          ),
+          code === "otp_expired" || /expired|invalid/i.test(message)
+            ? "Der Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Passwort-Link an."
+            : message || "Link ist ungültig oder abgelaufen.",
         );
+        window.history.replaceState({}, "", "/reset-password");
         return;
       }
 
@@ -71,6 +78,7 @@ export default function ResetPassword() {
           return;
         }
       } catch (e: any) {
+        setLinkInvalid(true);
         setError(e?.message || "Link ist ungültig oder abgelaufen.");
         return;
       }
