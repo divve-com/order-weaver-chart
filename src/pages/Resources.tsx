@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { resources } from "@/data/production";
+import { useResources } from "@/data/production";
 import { toast } from "sonner";
 
 const statusStyle: Record<string, string> = {
@@ -15,6 +15,7 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function Resources() {
+  const { data: resources = [], isLoading } = useResources();
   return (
     <div className="space-y-6">
       <PageHeader
@@ -33,7 +34,10 @@ export default function Resources() {
             <TableHead>Status</TableHead>
           </TableRow></TableHeader>
           <TableBody>
-            {resources.map((r) => (
+            {isLoading && (
+              <TableRow><TableCell colSpan={5} className="py-12 text-center text-sm text-muted-foreground">Lade Ressourcen…</TableCell></TableRow>
+            )}
+            {!isLoading && resources.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="font-medium">{r.name}</TableCell>
                 <TableCell className="text-muted-foreground">{r.group}</TableCell>
