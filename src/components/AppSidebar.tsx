@@ -10,6 +10,7 @@ import {
   LogOut,
   HelpCircle,
   Menu,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -36,6 +37,7 @@ const navItems = [
   { to: "/planning", label: "Planung", icon: GanttChartSquare, activePaths: ["/planning"] },
   { to: "/resources", label: "Ressourcen", icon: Factory, activePaths: ["/resources"] },
   { to: "/reports", label: "Auswertungen", icon: BarChart3, activePaths: ["/reports"] },
+  { to: "/chat", label: "Auftrags-Chat", icon: MessageSquare, activePaths: ["/chat"] },
 ];
 
 const AutomattersLogo = ({ className = "h-5 w-5" }: { className?: string }) => (
