@@ -39,6 +39,13 @@ export default function Planning() {
     toast.success(`${next.number} verschoben`);
   };
 
+  const handleOverload = ({ order, resource, days }: { order: Order; resource: { name: string; capacityHours: number }; days: { date: string; load: number; capacity: number }[] }) => {
+    const worst = days.reduce((m, d) => (d.load > m.load ? d : m), days[0]);
+    toast.warning(`Überlastung auf ${resource.name}`, {
+      description: `${order.number}: ${days.length} Tag(e) über Kapazität — Spitze ${worst.load} h / ${worst.capacity} h am ${new Date(worst.date).toLocaleDateString("de-DE")}.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -83,6 +90,7 @@ export default function Planning() {
             startOffsetDays={range === "day" ? -2 : range === "week" ? -7 : -14}
             onSelect={setActive}
             onChange={updateOrder}
+            onOverload={handleOverload}
           />
         </CardContent>
       </Card>

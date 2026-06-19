@@ -30,6 +30,7 @@ export function GanttChart({
   startOffsetDays = -7,
   onSelect,
   onChange,
+  onOverload,
 }: Props) {
   const origin = useMemo(() => {
     const t = startOfDay(new Date());
