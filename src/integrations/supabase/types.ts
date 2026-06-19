@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          article: string
+          created_at: string
+          customer: string
+          due_at: string
+          end_at: string
+          id: string
+          load_hours: number
+          number: string
+          owner_initials: string
+          owner_name: string
+          priority: string
+          progress: number
+          qty: number
+          resource_id: string
+          start_at: string
+          status: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          article: string
+          created_at?: string
+          customer: string
+          due_at: string
+          end_at: string
+          id?: string
+          load_hours?: number
+          number: string
+          owner_initials: string
+          owner_name: string
+          priority?: string
+          progress?: number
+          qty?: number
+          resource_id: string
+          start_at: string
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          article?: string
+          created_at?: string
+          customer?: string
+          due_at?: string
+          end_at?: string
+          id?: string
+          load_hours?: number
+          number?: string
+          owner_initials?: string
+          owner_name?: string
+          priority?: string
+          progress?: number
+          qty?: number
+          resource_id?: string
+          start_at?: string
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          capacity_hours: number
+          created_at: string
+          group_name: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          utilization: number
+        }
+        Insert: {
+          capacity_hours?: number
+          created_at?: string
+          group_name: string
+          id: string
+          name: string
+          status?: string
+          updated_at?: string
+          utilization?: number
+        }
+        Update: {
+          capacity_hours?: number
+          created_at?: string
+          group_name?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          utilization?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
