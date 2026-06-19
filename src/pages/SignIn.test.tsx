@@ -26,7 +26,7 @@ function renderSignIn(initialPath = "/sign-in") {
 }
 
 function fillAndSubmit(email = "test@example.com", password = "password123") {
-  fireEvent.change(screen.getByLabelText(/email/i), {
+  fireEvent.change(screen.getByLabelText("E-Mail"), {
     target: { value: email },
   });
   fireEvent.change(screen.getByLabelText(/passwort/i), {

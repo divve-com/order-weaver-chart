@@ -68,7 +68,6 @@ export default function SignIn() {
                 placeholder="name@example.com"
                 required
                 autoComplete="email"
-                aria-label="email"
               />
             </div>
             <div className="space-y-2">
