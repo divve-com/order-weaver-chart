@@ -11,20 +11,7 @@ import {
   ArrowUpRight, ArrowDownRight, Sparkles, AlertCircle, Plus, Download,
   Package, PlayCircle, CheckCircle2, FileSignature, CalendarClock, GanttChartSquare,
 } from "lucide-react";
-import { orders, resources, statusStyles, type OrderStatus } from "@/data/production";
-
-const totalOrders = orders.length;
-const inProgress = orders.filter((o) => o.status === "In Arbeit").length;
-const late = orders.filter((o) => o.status === "Verspätet").length;
-const open = orders.filter((o) => o.status === "Geplant" || o.status === "Freigegeben").length;
-const avgUtil = Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length);
-
-const kpis = [
-  { label: "Offene Aufträge", value: String(open), delta: 8, spark: [4, 6, 5, 8, 7, 9, 11] },
-  { label: "In Produktion", value: String(inProgress), delta: 4, spark: [3, 4, 4, 5, 5, 6, 6] },
-  { label: "Verspätet", value: String(late), delta: -2, spark: [6, 5, 5, 4, 4, 3, 3] },
-  { label: "Ø Auslastung", value: `${avgUtil} %`, delta: 6, spark: [50, 55, 58, 60, 65, 62, 68] },
-];
+import { useOrders, useResources, type OrderStatus } from "@/data/production";
 
 const stages: { stage: OrderStatus; color: string }[] = [
   { stage: "Geplant", color: "bg-muted text-muted-foreground" },
@@ -69,6 +56,19 @@ function Sparkline({ data, positive }: { data: number[]; positive: boolean }) {
 export default function Dashboard() {
   const [range, setRange] = useState("week");
   const navigate = useNavigate();
+  const { data: orders = [] } = useOrders();
+  const { data: resources = [] } = useResources();
+  const totalOrders = orders.length;
+  const inProgress = orders.filter((o) => o.status === "In Arbeit").length;
+  const late = orders.filter((o) => o.status === "Verspätet").length;
+  const open = orders.filter((o) => o.status === "Geplant" || o.status === "Freigegeben").length;
+  const avgUtil = resources.length ? Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length) : 0;
+  const kpis = [
+    { label: "Offene Aufträge", value: String(open), delta: 8, spark: [4, 6, 5, 8, 7, 9, 11] },
+    { label: "In Produktion", value: String(inProgress), delta: 4, spark: [3, 4, 4, 5, 5, 6, 6] },
+    { label: "Verspätet", value: String(late), delta: -2, spark: [6, 5, 5, 4, 4, 3, 3] },
+    { label: "Ø Auslastung", value: `${avgUtil} %`, delta: 6, spark: [50, 55, 58, 60, 65, 62, 68] },
+  ];
   return (
     <div className="space-y-6">
       <PageHeader

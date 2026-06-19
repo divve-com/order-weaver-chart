@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          article: string
+          created_at: string
+          customer: string
+          due_at: string
+          end_at: string
+          id: string
+          load_hours: number
+          number: string
+          owner_initials: string
+          owner_name: string
+          priority: string
+          progress: number
+          qty: number
+          resource_id: string
+          start_at: string
+          status: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          article: string
+          created_at?: string
+          customer: string
+          due_at: string
+          end_at: string
+          id?: string
+          load_hours?: number
+          number: string
+          owner_initials: string
+          owner_name: string
+          priority?: string
+          progress?: number
+          qty?: number
+          resource_id: string
+          start_at: string
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          article?: string
+          created_at?: string
+          customer?: string
+          due_at?: string
+          end_at?: string
+          id?: string
+          load_hours?: number
+          number?: string
+          owner_initials?: string
+          owner_name?: string
+          priority?: string
+          progress?: number
+          qty?: number
+          resource_id?: string
+          start_at?: string
+          status?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resources: {
+        Row: {
+          capacity_hours: number
+          created_at: string
+          group_name: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          utilization: number
+        }
+        Insert: {
+          capacity_hours?: number
+          created_at?: string
+          group_name: string
+          id: string
+          name: string
+          status?: string
+          updated_at?: string
+          utilization?: number
+        }
+        Update: {
+          capacity_hours?: number
+          created_at?: string
+          group_name?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          utilization?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,32 +126,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      appointment_recurrence:
-        | "keine"
-        | "woechentlich"
-        | "zweiwoechentlich"
-        | "monatlich"
-        | "quartal"
-        | "jaehrlich"
-      appointment_status: "geplant" | "erledigt" | "abgesagt"
-      billing_cycle: "monatlich" | "quartal" | "jaehrlich"
-      contract_item_kind: "package" | "module"
-      contract_status: "aktiv" | "pausiert" | "gekuendigt" | "beendet"
-      customer_status:
-        | "neu"
-        | "vertrag"
-        | "dns_setup"
-        | "validierung"
-        | "mail_test"
-        | "aktiv"
-        | "pausiert"
-      domain_status:
-        | "pending_dns"
-        | "dns_valid"
-        | "dns_failed"
-        | "subuser_active"
-      invoice_kind: "einrichtung" | "laufend"
-      invoice_status: "entwurf" | "versendet" | "bezahlt" | "storniert"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -175,36 +253,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      appointment_recurrence: [
-        "keine",
-        "woechentlich",
-        "zweiwoechentlich",
-        "monatlich",
-        "quartal",
-        "jaehrlich",
-      ],
-      appointment_status: ["geplant", "erledigt", "abgesagt"],
-      billing_cycle: ["monatlich", "quartal", "jaehrlich"],
-      contract_item_kind: ["package", "module"],
-      contract_status: ["aktiv", "pausiert", "gekuendigt", "beendet"],
-      customer_status: [
-        "neu",
-        "vertrag",
-        "dns_setup",
-        "validierung",
-        "mail_test",
-        "aktiv",
-        "pausiert",
-      ],
-      domain_status: [
-        "pending_dns",
-        "dns_valid",
-        "dns_failed",
-        "subuser_active",
-      ],
-      invoice_kind: ["einrichtung", "laufend"],
-      invoice_status: ["entwurf", "versendet", "bezahlt", "storniert"],
-    },
+    Enums: {},
   },
 } as const
