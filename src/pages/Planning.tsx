@@ -116,7 +116,6 @@ export default function Planning() {
             rangeDays={rangeDaysMap[range]}
             startOffsetDays={range === "day" ? -2 : range === "week" ? -7 : -14}
             onSelect={setActive}
-            onChange={updateOrder}
             onOverload={handleOverload}
           />
         </CardContent>
