@@ -27,12 +27,18 @@ import {
   Plus, Search, MoreHorizontal, Trash2, Pencil, Eye, FilterX, CheckCircle2, GanttChartSquare,
 } from "lucide-react";
 import { toast } from "sonner";
-import { orders as seed, resources, statusStyles, priorityStyles, formatDate, type Order } from "@/data/production";
+import {
+  statusStyles, priorityStyles, formatDate, type Order, type Priority,
+  useOrders, useResources, useCreateOrder, useDeleteOrders,
+} from "@/data/production";
 
 type Col = "number" | "article" | "qty" | "customer" | "resourceId" | "start" | "end" | "status" | "priority";
 
 export default function OrdersList() {
-  const [rows, setRows] = useState<Order[]>(seed);
+  const { data: rows = [], isLoading } = useOrders();
+  const { data: resources = [] } = useResources();
+  const createOrder = useCreateOrder();
+  const deleteOrders = useDeleteOrders();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [resource, setResource] = useState("all");
@@ -40,6 +46,9 @@ export default function OrdersList() {
   const [pageSize, setPageSize] = useState(10);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [createOpen, setCreateOpen] = useState(false);
+  const [draft, setDraft] = useState<{ article: string; qty: number; due: string; resourceId: string; priority: Priority }>({
+    article: "", qty: 100, due: "", resourceId: "", priority: "Normal",
+  });
   const { sortKey, sortDir, toggle } = useTableSort<Col>({ key: "start", dir: "asc" });
   const navigate = useNavigate();
 
@@ -84,6 +93,34 @@ export default function OrdersList() {
   const clearFilters = () => { setQ(""); setStatus("all"); setResource("all"); setPage(1); };
   const resName = (id: string) => resources.find((r) => r.id === id)?.name ?? "—";
 
+  const submitCreate = async () => {
+    if (!draft.article || !draft.resourceId || !draft.due) {
+      toast.error("Bitte Artikel, Ressource und Wunschtermin angeben.");
+      return;
+    }
+    try {
+      await createOrder.mutateAsync({
+        article: draft.article, qty: draft.qty, resourceId: draft.resourceId,
+        priority: draft.priority, due: new Date(draft.due).toISOString(),
+      });
+      setCreateOpen(false);
+      setDraft({ article: "", qty: 100, due: "", resourceId: "", priority: "Normal" });
+      toast.success("Auftrag angelegt");
+    } catch (e: any) {
+      toast.error("Anlegen fehlgeschlagen", { description: e?.message });
+    }
+  };
+
+  const removeMany = async (ids: string[]) => {
+    try {
+      await deleteOrders.mutateAsync(ids);
+      setSelected(new Set());
+      toast(`${ids.length} Aufträge gelöscht`);
+    } catch (e: any) {
+      toast.error("Löschen fehlgeschlagen", { description: e?.message });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -101,21 +138,21 @@ export default function OrdersList() {
                 <SheetDescription>Stammdaten — Planung erfolgt im Anschluss.</SheetDescription>
               </SheetHeader>
               <div className="grid gap-4 py-6">
-                <div className="space-y-2"><Label>Artikel</Label><Input placeholder="z. B. Welle W-18" /></div>
+                <div className="space-y-2"><Label>Artikel</Label><Input placeholder="z. B. Welle W-18" value={draft.article} onChange={(e) => setDraft({ ...draft, article: e.target.value })} /></div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2"><Label>Menge</Label><Input type="number" defaultValue={100} /></div>
-                  <div className="space-y-2"><Label>Wunschtermin</Label><Input type="date" /></div>
+                  <div className="space-y-2"><Label>Menge</Label><Input type="number" value={draft.qty} onChange={(e) => setDraft({ ...draft, qty: Number(e.target.value) || 0 })} /></div>
+                  <div className="space-y-2"><Label>Wunschtermin</Label><Input type="date" value={draft.due} onChange={(e) => setDraft({ ...draft, due: e.target.value })} /></div>
                 </div>
                 <div className="space-y-2">
                   <Label>Linie / Maschine</Label>
-                  <Select defaultValue={resources[0].id}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select value={draft.resourceId} onValueChange={(v) => setDraft({ ...draft, resourceId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Ressource wählen" /></SelectTrigger>
                     <SelectContent>{resources.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Priorität</Label>
-                  <Select defaultValue="Normal">
+                  <Select value={draft.priority} onValueChange={(v) => setDraft({ ...draft, priority: v as Priority })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Niedrig">Niedrig</SelectItem>
@@ -129,7 +166,7 @@ export default function OrdersList() {
               </div>
               <SheetFooter>
                 <Button variant="outline" onClick={() => setCreateOpen(false)}>Abbrechen</Button>
-                <Button onClick={() => { setCreateOpen(false); toast.success("Auftrag angelegt"); }}>Anlegen</Button>
+                <Button onClick={submitCreate} disabled={createOrder.isPending}>{createOrder.isPending ? "Speichere…" : "Anlegen"}</Button>
               </SheetFooter>
             </SheetContent>
           </Sheet>
@@ -160,12 +197,7 @@ export default function OrdersList() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Abbrechen</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => {
-                      setRows((r) => r.filter((x) => !selected.has(x.id)));
-                      const n = selected.size;
-                      setSelected(new Set());
-                      toast(`${n} Aufträge gelöscht`);
-                    }}
+                    onClick={() => removeMany(Array.from(selected))}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >Löschen</AlertDialogAction>
                 </AlertDialogFooter>
@@ -260,7 +292,7 @@ export default function OrdersList() {
                         <DropdownMenuItem onClick={() => navigate("/planning")}><GanttChartSquare className="mr-2 h-4 w-4" /> Im Plan zeigen</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => toast.success("Bearbeiten geöffnet")}><Pencil className="mr-2 h-4 w-4" /> Bearbeiten</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => { setRows((r) => r.filter((x) => x.id !== row.id)); toast.error("Gelöscht"); }}><Trash2 className="mr-2 h-4 w-4" /> Löschen</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => removeMany([row.id])}><Trash2 className="mr-2 h-4 w-4" /> Löschen</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
