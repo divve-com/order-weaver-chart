@@ -1,30 +1,30 @@
 // deno-lint-ignore-file no-explicit-any
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY")!;
 const PINECONE_API_KEY = Deno.env.get("PINECONE_API_KEY")!;
 const PINECONE_INDEX_HOST = Deno.env.get("PINECONE_INDEX_HOST")!;
 
 const normalizeHost = (h: string) => h.startsWith("http") ? h : `https://${h}`;
 
-async function embed(text: string): Promise<number[]> {
-  const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
+async function embed(text: string, inputType: "passage" | "query" = "passage"): Promise<number[]> {
+  const res = await fetch("https://api.pinecone.io/embed", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Api-Key": PINECONE_API_KEY,
       "Content-Type": "application/json",
+      "X-Pinecone-API-Version": "2024-10",
     },
     body: JSON.stringify({
-      model: "openai/text-embedding-3-small",
-      input: text,
-      dimensions: 1024,
+      model: "llama-text-embed-v2",
+      parameters: { input_type: inputType, truncate: "END" },
+      inputs: [{ text }],
     }),
   });
   if (!res.ok) {
     throw new Error(`Embedding failed ${res.status}: ${await res.text()}`);
   }
   const json = await res.json();
-  return json.data[0].embedding as number[];
+  return json.data[0].values as number[];
 }
 
 function buildOrderText(o: any): string {
