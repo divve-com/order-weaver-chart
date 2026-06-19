@@ -5,9 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
-import ListView from "./pages/ListView";
-import DetailView from "./pages/DetailView";
-import CalendarView from "./pages/CalendarView";
+import OrdersList from "./pages/OrdersList";
+import OrderDetail from "./pages/OrderDetail";
+import Planning from "./pages/Planning";
+import Resources from "./pages/Resources";
+import Reports from "./pages/Reports";
 import SettingsView from "./pages/SettingsView";
 import Components from "./pages/Components";
 import SignIn from "./pages/SignIn";
@@ -25,13 +27,11 @@ const App = () => (
           <Route path="/sign-in" element={<SignIn />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/customers" element={<ListView />} />
-            <Route path="/list" element={<ListView />} />
-            <Route path="/list/:id" element={<DetailView />} />
-            <Route path="/calendar" element={<CalendarView />} />
-            <Route path="/contracts" element={<ListView />} />
-            <Route path="/invoices" element={<ListView />} />
-            <Route path="/domains" element={<Components />} />
+            <Route path="/orders" element={<OrdersList />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
+            <Route path="/planning" element={<Planning />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<SettingsView />} />
             <Route path="/components" element={<Components />} />
           </Route>

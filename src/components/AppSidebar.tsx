@@ -2,11 +2,10 @@ import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Users,
-  CalendarDays,
-  FileText,
-  Receipt,
-  Globe,
+  ClipboardList,
+  GanttChartSquare,
+  Factory,
+  BarChart3,
   Settings,
   LogOut,
   HelpCircle,
@@ -31,12 +30,11 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, activePaths: ["/"] },
-  { to: "/customers", label: "Kunden", icon: Users, activePaths: ["/customers", "/list"] },
-  { to: "/calendar", label: "Kalender", icon: CalendarDays, activePaths: ["/calendar"] },
-  { to: "/contracts", label: "Verträge", icon: FileText, activePaths: ["/contracts"] },
-  { to: "/invoices", label: "Abrechnung", icon: Receipt, activePaths: ["/invoices"] },
-  { to: "/domains", label: "Domains", icon: Globe, activePaths: ["/domains", "/components"] },
+  { to: "/", label: "Übersicht", icon: LayoutDashboard, end: true, activePaths: ["/"] },
+  { to: "/orders", label: "Aufträge", icon: ClipboardList, activePaths: ["/orders"] },
+  { to: "/planning", label: "Planung", icon: GanttChartSquare, activePaths: ["/planning"] },
+  { to: "/resources", label: "Ressourcen", icon: Factory, activePaths: ["/resources"] },
+  { to: "/reports", label: "Auswertungen", icon: BarChart3, activePaths: ["/reports"] },
 ];
 
 const AutomattersLogo = ({ className = "h-5 w-5" }: { className?: string }) => (
@@ -169,7 +167,7 @@ export function AppSidebar() {
         >
           <AutomattersLogo className="h-4 w-4" />
         </NavLink>
-        <p className="text-sm font-semibold tracking-tight">App Template</p>
+        <p className="text-sm font-semibold tracking-tight">Produktionsplanung</p>
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <button
