@@ -127,82 +127,16 @@ export default function OrdersList() {
         breadcrumbs={[{ label: "Produktion" }, { label: "Aufträge" }]}
         title="Produktionsaufträge"
         subtitle="Alle Fertigungsaufträge mit Status, Ressource und Terminen."
-        actions={
-          <Sheet open={createOpen} onOpenChange={setCreateOpen}>
-            <SheetTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Neuer Auftrag</Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Neuer Produktionsauftrag</SheetTitle>
-                <SheetDescription>Stammdaten — Planung erfolgt im Anschluss.</SheetDescription>
-              </SheetHeader>
-              <div className="grid gap-4 py-6">
-                <div className="space-y-2"><Label>Artikel</Label><Input placeholder="z. B. Welle W-18" value={draft.article} onChange={(e) => setDraft({ ...draft, article: e.target.value })} /></div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-2"><Label>Menge</Label><Input type="number" value={draft.qty} onChange={(e) => setDraft({ ...draft, qty: Number(e.target.value) || 0 })} /></div>
-                  <div className="space-y-2"><Label>Wunschtermin</Label><Input type="date" value={draft.due} onChange={(e) => setDraft({ ...draft, due: e.target.value })} /></div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Linie / Maschine</Label>
-                  <Select value={draft.resourceId} onValueChange={(v) => setDraft({ ...draft, resourceId: v })}>
-                    <SelectTrigger><SelectValue placeholder="Ressource wählen" /></SelectTrigger>
-                    <SelectContent>{resources.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Priorität</Label>
-                  <Select value={draft.priority} onValueChange={(v) => setDraft({ ...draft, priority: v as Priority })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Niedrig">Niedrig</SelectItem>
-                      <SelectItem value="Normal">Normal</SelectItem>
-                      <SelectItem value="Hoch">Hoch</SelectItem>
-                      <SelectItem value="Kritisch">Kritisch</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2"><Label>Notiz</Label><Textarea rows={3} placeholder="Optional…" /></div>
-              </div>
-              <SheetFooter>
-                <Button variant="outline" onClick={() => setCreateOpen(false)}>Abbrechen</Button>
-                <Button onClick={submitCreate} disabled={createOrder.isPending}>{createOrder.isPending ? "Speichere…" : "Anlegen"}</Button>
-              </SheetFooter>
-            </SheetContent>
-          </Sheet>
-        }
+        actions={<Badge variant="secondary">Read-Only · Login erforderlich für Änderungen</Badge>}
       />
 
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-ink px-3 py-2 text-primary-foreground sm:px-4">
           <p className="text-sm"><span className="font-semibold">{selected.size}</span> ausgewählt</p>
           <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-            <Button size="sm" variant="ghost" className="text-primary-foreground hover:bg-white/10" onClick={() => toast.success(`${selected.size} Aufträge freigegeben`)}>
-              <CheckCircle2 className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Freigeben</span>
-            </Button>
             <Button size="sm" variant="ghost" className="text-primary-foreground hover:bg-white/10" onClick={() => navigate("/planning")}>
               <GanttChartSquare className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Auf Plan</span>
             </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="text-destructive hover:bg-destructive/20">
-                  <Trash2 className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Löschen</span>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{selected.size} Aufträge löschen?</AlertDialogTitle>
-                  <AlertDialogDescription>Diese Aktion kann nicht rückgängig gemacht werden.</AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => removeMany(Array.from(selected))}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >Löschen</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
       )}
@@ -288,11 +222,7 @@ export default function OrdersList() {
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => navigate(`/orders/${row.id}`)}><Eye className="mr-2 h-4 w-4" /> Öffnen</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.success("Freigegeben")}><CheckCircle2 className="mr-2 h-4 w-4" /> Freigeben</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => navigate("/planning")}><GanttChartSquare className="mr-2 h-4 w-4" /> Im Plan zeigen</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toast.success("Bearbeiten geöffnet")}><Pencil className="mr-2 h-4 w-4" /> Bearbeiten</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => removeMany([row.id])}><Trash2 className="mr-2 h-4 w-4" /> Löschen</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
