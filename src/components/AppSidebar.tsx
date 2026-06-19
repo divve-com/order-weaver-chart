@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { to: "/", label: "Übersicht", icon: LayoutDashboard, end: true, activePaths: ["/"] },
@@ -51,6 +52,9 @@ export function AppSidebar() {
   const { pathname } = useLocation();
   const isRouteActive = (paths: string[]) => paths.some((path) => (path === "/" ? pathname === "/" : pathname.startsWith(path)));
   const settingsActive = pathname.startsWith("/settings");
+  const { user, signOut } = useAuth();
+  const userEmail = user?.email ?? "";
+  const initials = userEmail.slice(0, 2).toUpperCase();
 
   return (
     <>
@@ -126,7 +130,7 @@ export function AppSidebar() {
                 >
                   <Avatar className="h-9 w-9">
                     <AvatarFallback className="bg-ink text-primary-foreground text-xs font-semibold">
-                      AB
+                      {initials}
                     </AvatarFallback>
                   </Avatar>
                 </button>
@@ -135,7 +139,7 @@ export function AppSidebar() {
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">Mein Konto</p>
-                    <p className="text-xs text-muted-foreground truncate">email@example.com</p>
+                    <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -146,11 +150,12 @@ export function AppSidebar() {
                   </NavLink>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild className="text-destructive focus:text-destructive">
-                  <NavLink to="/sign-in">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Abmelden
-                  </NavLink>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => void signOut()}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Abmelden
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -182,12 +187,12 @@ export function AppSidebar() {
               <div className="flex items-center gap-3 border-b px-4 py-4">
                 <Avatar className="h-9 w-9">
                   <AvatarFallback className="bg-ink text-primary-foreground text-xs font-semibold">
-                    AB
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-sm font-medium">Mein Konto</p>
-                  <p className="text-xs text-muted-foreground truncate">email@example.com</p>
+                  <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
                 </div>
               </div>
 
@@ -241,13 +246,12 @@ export function AppSidebar() {
               </nav>
 
               <div className="border-t p-3">
-                <NavLink
-                  to="/sign-in"
-                  onClick={() => setMobileOpen(false)}
+                <button
+                  onClick={() => { setMobileOpen(false); void signOut(); }}
                   className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors"
                 >
                   <LogOut className="h-4 w-4" /> Abmelden
-                </NavLink>
+                </button>
               </div>
             </div>
           </SheetContent>
