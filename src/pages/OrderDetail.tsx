@@ -21,7 +21,7 @@ import {
 import { Stepper } from "@/components/Stepper";
 import { SubNav, type SubNavItem } from "@/components/SubNav";
 import { toast } from "sonner";
-import { orders, resources, statusStyles, priorityStyles, formatDate } from "@/data/production";
+import { statusStyles, priorityStyles, formatDate, useOrders, useResources } from "@/data/production";
 
 const subNavItems: SubNavItem[] = [
   { key: "overview", label: "Übersicht", icon: User },
@@ -69,11 +69,16 @@ const history = [
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const order = orders.find((o) => o.id === id) ?? orders[0];
-  const resource = resources.find((r) => r.id === order.resourceId);
+  const { data: orders = [], isLoading } = useOrders();
+  const { data: resources = [] } = useResources();
   const [section, setSection] = useState("overview");
   const [editOpen, setEditOpen] = useState(false);
 
+  const order = orders.find((o) => o.id === id) ?? orders[0];
+  if (isLoading || !order) {
+    return <div className="p-6 text-sm text-muted-foreground">Lade Auftrag…</div>;
+  }
+  const resource = resources.find((r) => r.id === order.resourceId);
   const s = statusStyles[order.status];
 
   return (

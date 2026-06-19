@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,14 +9,21 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { GanttChart } from "@/components/GanttChart";
-import { orders as seed, resources, statusStyles, priorityStyles, formatDate, type Order } from "@/data/production";
+import {
+  statusStyles, priorityStyles, formatDate, type Order,
+  useOrders, useResources, useUpdateOrder,
+} from "@/data/production";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 const rangeDaysMap = { day: 7, week: 21, month: 42 } as const;
 
 export default function Planning() {
-  const [items, setItems] = useState<Order[]>(seed);
+  const { data: orders = [] } = useOrders();
+  const { data: resources = [] } = useResources();
+  const updateOrderMut = useUpdateOrder();
+  const [items, setItems] = useState<Order[]>([]);
+  useEffect(() => { setItems(orders); }, [orders]);
   const [range, setRange] = useState<keyof typeof rangeDaysMap>("week");
   const [active, setActive] = useState<Order | null>(null);
 
@@ -32,7 +39,7 @@ export default function Planning() {
     });
     return set.size;
   }, [items]);
-  const avgUtil = Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length);
+  const avgUtil = resources.length ? Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length) : 0;
 
   const overloadedRes = useMemo(() => {
     const DAY = 86_400_000;
@@ -53,7 +60,10 @@ export default function Planning() {
 
   const updateOrder = (next: Order) => {
     setItems((arr) => arr.map((o) => (o.id === next.id ? next : o)));
-    toast.success(`${next.number} verschoben`);
+    updateOrderMut.mutate(next, {
+      onSuccess: () => toast.success(`${next.number} verschoben`),
+      onError: (e: any) => toast.error("Speichern fehlgeschlagen", { description: e?.message }),
+    });
   };
 
   const handleOverload = ({ order, resource, days }: { order: Order; resource: { name: string; capacityHours: number }; days: { date: string; load: number; capacity: number }[] }) => {
