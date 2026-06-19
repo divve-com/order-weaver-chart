@@ -25,6 +25,8 @@ export interface Order {
   priority: Priority;
   owner: { name: string; initials: string };
   due: string;
+  /** Stunden pro Tag, die dieser Auftrag die Ressource belegt. */
+  loadHours: number;
 }
 
 export const resources: Resource[] = [
@@ -64,6 +66,7 @@ export const orders: Order[] = Array.from({ length: 28 }).map((_, i) => {
   const duration = 1 + (i % 5);
   const status = statuses[i % statuses.length];
   const progress = status === "Fertig" ? 100 : status === "In Arbeit" ? 30 + ((i * 17) % 60) : status === "Verspätet" ? 40 + ((i * 11) % 40) : 0;
+  const loadHours = [4, 6, 8, 10, 12][i % 5];
   return {
     id: String(i + 1),
     number: `PA-2026-${String(1000 + i).slice(1)}`,
@@ -79,6 +82,7 @@ export const orders: Order[] = Array.from({ length: 28 }).map((_, i) => {
     priority: priorities[i % priorities.length],
     owner: owners[i % owners.length],
     due: isoDay(startOff + duration + (i % 3)),
+    loadHours,
   };
 });
 
