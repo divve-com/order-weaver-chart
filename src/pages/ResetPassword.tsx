@@ -77,9 +77,13 @@ export default function ResetPassword() {
           window.history.replaceState({}, "", "/reset-password");
           return;
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
         setLinkInvalid(true);
-        setError(e?.message || "Link ist ungültig oder abgelaufen.");
+        setError(
+          e instanceof Error
+            ? e.message
+            : "Link ist ungültig oder abgelaufen.",
+        );
         return;
       }
 
