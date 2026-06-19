@@ -9,17 +9,22 @@ const MODEL = "google/gemini-2.5-flash";
 const normalizeHost = (h: string) => h.startsWith("http") ? h : `https://${h}`;
 
 async function embed(text: string): Promise<number[]> {
-  const res = await fetch("https://openrouter.ai/api/v1/embeddings", {
+  const res = await fetch("https://api.pinecone.io/embed", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+      "Api-Key": PINECONE_API_KEY,
       "Content-Type": "application/json",
+      "X-Pinecone-API-Version": "2024-10",
     },
-    body: JSON.stringify({ model: "openai/text-embedding-3-small", input: text, dimensions: 1024 }),
+    body: JSON.stringify({
+      model: "llama-text-embed-v2",
+      parameters: { input_type: "query", truncate: "END" },
+      inputs: [{ text }],
+    }),
   });
   if (!res.ok) throw new Error(`Embed ${res.status}: ${await res.text()}`);
   const j = await res.json();
-  return j.data[0].embedding as number[];
+  return j.data[0].values as number[];
 }
 
 async function pineconeQuery(values: number[], topK = 6) {
