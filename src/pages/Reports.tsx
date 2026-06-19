@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { orders, resources, statusStyles, type OrderStatus } from "@/data/production";
+import { statusStyles, useOrders, useResources, type OrderStatus } from "@/data/production";
 
 function Sparkline({ data }: { data: number[] }) {
   const max = Math.max(...data), min = Math.min(...data);
@@ -13,6 +13,8 @@ function Sparkline({ data }: { data: number[] }) {
 }
 
 export default function Reports() {
+  const { data: orders = [] } = useOrders();
+  const { data: resources = [] } = useResources();
   const total = orders.length;
   const byStatus = (Object.keys(statusStyles) as OrderStatus[]).map((k) => ({
     status: k,
@@ -20,6 +22,7 @@ export default function Reports() {
   }));
   const onTime = orders.filter((o) => o.status === "Fertig").length;
   const late = orders.filter((o) => o.status === "Verspätet").length;
+  const avgUtil = resources.length ? Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length) : 0;
 
   return (
     <div className="space-y-6">
@@ -49,7 +52,7 @@ export default function Reports() {
         <Card>
           <CardHeader><CardTitle className="text-lg">Ø Auslastung</CardTitle><CardDescription>Alle Ressourcen</CardDescription></CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{Math.round(resources.reduce((a, r) => a + r.utilization, 0) / resources.length)} %</p>
+            <p className="text-3xl font-bold">{avgUtil} %</p>
           </CardContent>
         </Card>
       </div>
