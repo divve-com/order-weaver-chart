@@ -20,17 +20,66 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Supabase parses the recovery token from the URL hash automatically
-    // and emits a PASSWORD_RECOVERY event. We wait for a session before
-    // allowing the user to set a new password.
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setReady(true);
+      if (event === "PASSWORD_RECOVERY" || session) setReady(true);
+    });
+
+    (async () => {
+      // 1) Newer flows use ?code=... (PKCE) or ?token_hash=...&type=recovery
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get("code");
+      const tokenHash = url.searchParams.get("token_hash");
+      const type = url.searchParams.get("type");
+      const queryError =
+        url.searchParams.get("error_description") ||
+        url.searchParams.get("error");
+
+      // 2) Older flows put tokens in the URL hash (#access_token=...&type=recovery)
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : "";
+      const hashParams = new URLSearchParams(hash);
+      const hashError =
+        hashParams.get("error_description") || hashParams.get("error");
+
+      if (queryError || hashError) {
+        setError(
+          decodeURIComponent(
+            queryError || hashError || "Link ist ungültig oder abgelaufen.",
+          ),
+        );
+        return;
       }
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setReady(true);
-    });
+
+      try {
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          setReady(true);
+          // Clean the URL
+          window.history.replaceState({}, "", "/reset-password");
+          return;
+        }
+        if (tokenHash) {
+          const { error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: (type as "recovery") || "recovery",
+          });
+          if (error) throw error;
+          setReady(true);
+          window.history.replaceState({}, "", "/reset-password");
+          return;
+        }
+      } catch (e: any) {
+        setError(e?.message || "Link ist ungültig oder abgelaufen.");
+        return;
+      }
+
+      // 3) Fallback: hash-based session (already parsed by supabase-js)
+      const { data: sess } = await supabase.auth.getSession();
+      if (sess.session) setReady(true);
+    })();
+
     return () => data.subscription.unsubscribe();
   }, []);
 
