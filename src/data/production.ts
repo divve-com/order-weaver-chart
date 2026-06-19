@@ -1,3 +1,6 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 export type OrderStatus = "Geplant" | "Freigegeben" | "In Arbeit" | "Fertig" | "Verspätet";
 export type Priority = "Niedrig" | "Normal" | "Hoch" | "Kritisch";
 
@@ -29,62 +32,116 @@ export interface Order {
   loadHours: number;
 }
 
-export const resources: Resource[] = [
-  { id: "L1", name: "Linie A · Montage", group: "Montage", capacityHours: 16, utilization: 78, status: "Belegt" },
-  { id: "L2", name: "Linie B · Montage", group: "Montage", capacityHours: 16, utilization: 54, status: "Verfügbar" },
-  { id: "M1", name: "CNC-Fräse 1", group: "Zerspanung", capacityHours: 20, utilization: 92, status: "Belegt" },
-  { id: "M2", name: "CNC-Fräse 2", group: "Zerspanung", capacityHours: 20, utilization: 31, status: "Verfügbar" },
-  { id: "L3", name: "Lackierung", group: "Oberfläche", capacityHours: 12, utilization: 67, status: "Belegt" },
-  { id: "L4", name: "Prüfstand", group: "Qualität", capacityHours: 8, utilization: 12, status: "Wartung" },
-];
+// ---- DB <-> Domain mapping ---------------------------------------------------
 
-const owners = [
-  { name: "Jana M.", initials: "JM" },
-  { name: "Tom K.", initials: "TK" },
-  { name: "Sara L.", initials: "SL" },
-  { name: "Ben H.", initials: "BH" },
-];
+type ResourceRow = {
+  id: string; name: string; group_name: string;
+  capacity_hours: number; utilization: number; status: Resource["status"];
+};
+type OrderRow = {
+  id: string; number: string; article: string; qty: number; unit: string;
+  customer: string; resource_id: string;
+  start_at: string; end_at: string; due_at: string;
+  progress: number; status: OrderStatus; priority: Priority;
+  owner_name: string; owner_initials: string; load_hours: number;
+};
 
-const articles = [
-  "Gehäuse GH-220", "Welle W-18", "Pumpe P-7", "Ventilblock VB-3",
-  "Halterung HX-9", "Adapterring AR-2", "Sensorkopf SK-5", "Zahnrad Z-44",
-  "Kupplung K-12", "Leiterplatte LP-S2",
-];
-const customers = ["Müller AG", "Schmidt KG", "Weber GmbH", "Hoffmann SE", "Becker UG", "Lange & Co."];
-const statuses: OrderStatus[] = ["Geplant", "Freigegeben", "In Arbeit", "Fertig", "Verspätet"];
-const priorities: Priority[] = ["Niedrig", "Normal", "Hoch", "Kritisch"];
+const mapResource = (r: ResourceRow): Resource => ({
+  id: r.id, name: r.name, group: r.group_name,
+  capacityHours: r.capacity_hours, utilization: r.utilization, status: r.status,
+});
 
-function isoDay(offset: number) {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + offset);
-  return d.toISOString();
+const mapOrder = (o: OrderRow): Order => ({
+  id: o.id, number: o.number, article: o.article, qty: o.qty, unit: o.unit,
+  customer: o.customer, resourceId: o.resource_id,
+  start: o.start_at, end: o.end_at, due: o.due_at,
+  progress: o.progress, status: o.status, priority: o.priority,
+  owner: { name: o.owner_name, initials: o.owner_initials },
+  loadHours: o.load_hours,
+});
+
+const db = supabase as any;
+
+// ---- Queries / Mutations -----------------------------------------------------
+
+export function useResources() {
+  return useQuery({
+    queryKey: ["resources"],
+    queryFn: async (): Promise<Resource[]> => {
+      const { data, error } = await db.from("resources").select("*").order("id");
+      if (error) throw error;
+      return (data as ResourceRow[]).map(mapResource);
+    },
+  });
 }
 
-export const orders: Order[] = Array.from({ length: 28 }).map((_, i) => {
-  const startOff = -7 + ((i * 3) % 21);
-  const duration = 1 + (i % 5);
-  const status = statuses[i % statuses.length];
-  const progress = status === "Fertig" ? 100 : status === "In Arbeit" ? 30 + ((i * 17) % 60) : status === "Verspätet" ? 40 + ((i * 11) % 40) : 0;
-  const loadHours = [4, 6, 8, 10, 12][i % 5];
-  return {
-    id: String(i + 1),
-    number: `PA-2026-${String(1000 + i).slice(1)}`,
-    article: articles[i % articles.length],
-    qty: 25 + ((i * 37) % 475),
-    unit: "Stk.",
-    customer: customers[i % customers.length],
-    resourceId: resources[i % resources.length].id,
-    start: isoDay(startOff),
-    end: isoDay(startOff + duration),
-    progress,
-    status,
-    priority: priorities[i % priorities.length],
-    owner: owners[i % owners.length],
-    due: isoDay(startOff + duration + (i % 3)),
-    loadHours,
-  };
-});
+export function useOrders() {
+  return useQuery({
+    queryKey: ["orders"],
+    queryFn: async (): Promise<Order[]> => {
+      const { data, error } = await db.from("orders").select("*").order("start_at");
+      if (error) throw error;
+      return (data as OrderRow[]).map(mapOrder);
+    },
+  });
+}
+
+export function useUpdateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (o: Order) => {
+      const patch = {
+        article: o.article, qty: o.qty, unit: o.unit, customer: o.customer,
+        resource_id: o.resourceId, start_at: o.start, end_at: o.end, due_at: o.due,
+        progress: o.progress, status: o.status, priority: o.priority,
+        owner_name: o.owner.name, owner_initials: o.owner.initials,
+        load_hours: o.loadHours,
+      };
+      const { error } = await db.from("orders").update(patch).eq("id", o.id);
+      if (error) throw error;
+      return o;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
+
+export type NewOrderInput = {
+  article: string; qty: number; customer?: string; resourceId: string;
+  priority: Priority; due: string;
+};
+
+export function useCreateOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: NewOrderInput) => {
+      // Auto-number: count existing rows.
+      const { count } = await db.from("orders").select("id", { count: "exact", head: true });
+      const number = `PA-2026-${String(1000 + (count ?? 0)).slice(1)}`;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const insert = {
+        number, article: input.article, qty: input.qty, unit: "Stk.",
+        customer: input.customer ?? "—", resource_id: input.resourceId,
+        start_at: today.toISOString(), end_at: input.due, due_at: input.due,
+        progress: 0, status: "Geplant" as OrderStatus, priority: input.priority,
+        owner_name: "System", owner_initials: "SY", load_hours: 8,
+      };
+      const { error } = await db.from("orders").insert(insert);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
+
+export function useDeleteOrders() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { error } = await db.from("orders").delete().in("id", ids);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
 
 export const statusStyles: Record<OrderStatus, { dot: string; badge: string; bar: string }> = {
   Geplant:     { dot: "bg-muted-foreground", badge: "bg-muted text-foreground", bar: "bg-lavender-300" },
