@@ -222,7 +222,7 @@ export default function OrdersList() {
                 <TableCell colSpan={11}>
                   <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
                     <FilterX className="h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm font-medium">Keine Treffer</p>
+                    <p className="text-sm font-medium">{isLoading ? "Lade Aufträge…" : "Keine Treffer"}</p>
                     <Button size="sm" variant="outline" onClick={clearFilters}>Filter zurücksetzen</Button>
                   </div>
                 </TableCell>
